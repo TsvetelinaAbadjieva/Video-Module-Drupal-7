@@ -1,0 +1,7 @@
+name = Custom Brightcove
+description = This additional module for Video manipulation
+package = Custom
+core = 7.x
+files[] = custom_brightcove.module
+files[] = brightcove-video.tpl.php
+files[] = brightcove.settings.inc

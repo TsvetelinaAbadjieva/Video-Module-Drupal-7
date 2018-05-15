@@ -1,0 +1,145 @@
+<?php
+define('BRIGHTCOVE_ACCOUNT_ID',5783296993001);
+
+function custom_brightcove_menu(){
+  $items = [];
+  $items['admin/config/media/brightcove-custom'] = array(
+    'title' => 'Brightcove Video Settings Page',
+    'description' => 'This configuration page allows to be set input parameteres for Account Id, Secret key and display options needed for Brightcove video usage',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('set_brightcove_settings'),
+    'access arguments' => array('administer site configuration'),
+    'position' => 'left',
+    'weight' => -15,
+    'file' => 'brightcove.settings.inc',
+    'type' => MENU_NORMAL_ITEM,
+  );
+  return $items;
+}
+
+function custom_brightcove_field_formatter_info() {
+  return array(
+    'text_default' => array(
+      'label' => t('Default'),
+      'field types' => array(
+        'text',
+        'text_long',
+        'text_with_summary',
+      ),
+    ),
+    'text_plain' => array(
+      'label' => t('Plain text'),
+      'field types' => array(
+        'text',
+        'text_long',
+        'text_with_summary',
+      ),
+    ),
+    // The text_trimmed formatter displays the trimmed version of the
+    // full element of the field. It is intended to be used with text
+    // and text_long fields. It also works with text_with_summary
+    // fields though the text_summary_or_trimmed formatter makes more
+    // sense for that field type.
+    'text_trimmed' => array(
+      'label' => t('Trimmed'),
+      'field types' => array(
+        'text',
+        'text_long',
+        'text_with_summary',
+      ),
+    ),
+    'text_summary_or_trimmed' => array(
+      'label' => t('Summary or trimmed'),
+      'field types' => array(
+        'text_with_summary',
+      ),
+    ),
+
+    'brightcove_video_formatter' => array(
+      'label' => t('Brightcove Video Id'),
+      'field types' => array(
+        'text',
+        'text_long',
+        'text_with_summary',
+      ),
+    ),
+  );
+}
+
+/**
+* Implements hook_theme()
+*/
+function custom_brightcove_theme(){
+
+  $themes = [];
+  $themes ['brightcove_video_template'] =  array(
+    'template' => 'brightcove-video',
+    'variables' => array(
+      'account_id' => null,
+      'video_id' => null,
+      'width' => null,
+      'height' => null,
+    ),
+    'path' => drupal_get_path('module', 'custom_brightcove') . '/templates',
+  );
+
+  return $themes;
+}
+
+
+// <video src="https://player.vimeo.com/external/258241123.hd.mp4?s=ef12e694c8758814e768acaaf1ccf4ac5593d375&amp;profile_id=175" webkit-playsinline="" playsinline="" preload="metadata" class="h5p-video" style="display: block;"></video>
+// christian.plumbohm@publicispixelpark.de, henning.stock@pfizer.com
+
+function custom_brightcove_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
+  dsm($items);
+  $element = array();
+  $settings = $display['settings'];
+  switch ($display['type']) {
+    case 'sample_field_formatter_simple':
+
+      // Common case: each value is displayed individually in a sub-element
+      // keyed by delta. The field.tpl.php template specifies the markup
+      // wrapping each value.
+      foreach ($items as $delta => $item) {
+        $element[$delta] = array(
+          '#markup' => $settings['some_setting'] . $item['value'],
+        );
+      }
+      break;
+
+      case 'brightcove_video_formatter' :
+        foreach($items as $delta => $item){
+          $element[$delta] = array(
+            // '#markup' => brightcove_embeded_formatter($item['value']),
+            '#markup' => theme('brightcove_video_template', array(
+              'account_id' => variable_get('account_id'),
+              'video_id'   =>check_plain($item['value']))),
+              'width'      => check_plain(variable_get('iframe_width')),
+              'hight'      => check_plain(variable_get('iframe_height'))
+            );
+          }
+          break;
+
+      case 'sample_field_formatter_combined':
+
+            // Some formatters might need to display all values within a single piece
+            // of markup.
+            $rows = array();
+            foreach ($items as $delta => $item) {
+              $rows[] = array(
+                $delta,
+                $item['value'],
+              );
+            }
+            $element[0] = array(
+              '#theme' => 'table',
+              '#header' => array(
+                t('Delta'),
+                t('Value'),
+              ),
+              '#rows' => $rows,
+            );
+            break;
+          }
+          return $element;
+        }
